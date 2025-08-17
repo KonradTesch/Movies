@@ -1,12 +1,10 @@
 import random
 import matplotlib.pyplot as plt
 import requests
-import os
-from dotenv import load_dotenv
 
-import movie_storage_sql as storage
+from api_data_fetcher import get_movie_data_from_api
+from movie_storage import movie_storage_sql as storage
 
-API_Key = "b20d4c97"
 
 WHITE = "\033[0m"
 RED = "\033[91m"
@@ -45,57 +43,9 @@ def green_input(text):
     print(WHITE, end="")
     return input_string
 
-def get_movie_data_from_api(title: str):
-    load_dotenv()
-    api_key = os.getenv("API_KEY")
-
-    url = f"http://www.omdbapi.com/?apikey={api_key}&t={title}"
-
-    response = requests.get(url)
-
-    response_data = response.json()
-
-    if response_data.get("Error"):
-        error_message = response_data["Error"]
-        raise Exception(error_message)
-
-    movie_data = {"title": response_data["Title"],
-                  "year": response_data["Year"],
-                  "rating": response_data["imdbRating"],
-                  "posterURL": response_data["Poster"]}
-
-    return movie_data
 
 def print_title(title):
     print(blue_text("-" * 15 + f" {title} " + "-" * 15))
-
-
-def menu():
-    """
-    prints the menu options
-    :return: None
-    """
-    print()
-    print(blue_text("Menu:"))
-
-    for index, option in MENU_OPTIONS.items():
-        print(blue_text(f"{index}. {option[1]}"))
-
-
-    while True:
-        try:
-            print()
-            choice_string = int(green_input(f"Enter choice (0-{len(MENU_OPTIONS)-1}): "))
-            # check if the input is between 1 and 10
-            if MENU_OPTIONS.get(choice_string):
-                function = MENU_OPTIONS.get(choice_string)[0]
-                function()
-                input("\nPress enter to continue")
-                break
-            else:
-                raise ValueError()
-        except ValueError:
-            print(red_text("Invalid input, try again."))
 
 
 def print_movie_list():
@@ -117,7 +67,7 @@ def add_movie():
     new_movie_name = green_input("Enter new movie name: ")
 
     try:
-        movie_data = get_movie_data_from_api(new_movie_name)
+        movie_data = api_data_fetcher.get_movie_data_from_api(new_movie_name)
 
         storage.add_movie(movie_data)
 
@@ -424,8 +374,6 @@ def get_html_movie(movie_title: str):
     return html_string
 
 
-
-
 def create_histogram():
     """
     Creates a histogram and saves it as a file
@@ -495,36 +443,3 @@ def get_edit_distance(word, compare_to):
 def quit_program():
     print("Bye!")
     quit()
-
-
-MENU_OPTIONS = {
-    0 : (quit_program, "Exit"),
-    1 : (print_movie_list, "List movies"),
-    2 : (add_movie, "Add movie"),
-    3 : (delete_movie, "Delete movie"),
-    4 : (update_movie, "Update movie"),
-    5 : (print_stats, "Stats"),
-    6 : (random_movie, "Random movie"),
-    7 : (search_movie, "Search movie"),
-    8 : (print_sorted_list_rating, "Movies sorted by rating"),
-    9 : (print_sorted_list_release, "Movies sorted by release"),
-    10 : (filter_movies, "Filter movies"),
-    11 : (generate_website, "Generate website"),
-    12 : (create_histogram, "Create rating histogram")
-}
-
-
-def main():
-    """
-    The main function
-    :return: None
-    """
-
-    print_title("Movie Database")
-
-    while True:
-        menu()
-
-
-if __name__ == "__main__":
-    main()
