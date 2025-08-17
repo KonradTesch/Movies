@@ -1,6 +1,8 @@
 import random
 import matplotlib.pyplot as plt
 import requests
+import os
+from dotenv import load_dotenv
 
 import movie_storage_sql as storage
 
@@ -44,7 +46,10 @@ def green_input(text):
     return input_string
 
 def get_movie_data_from_api(title: str):
-    url = f"http://www.omdbapi.com/?apikey={API_Key}&t={title}"
+    load_dotenv()
+    api_key = os.getenv("API_KEY")
+
+    url = f"http://www.omdbapi.com/?apikey={api_key}&t={title}"
 
     response = requests.get(url)
 
@@ -91,8 +96,6 @@ def menu():
                 raise ValueError()
         except ValueError:
             print(red_text("Invalid input, try again."))
-
-
 
 
 def print_movie_list():
