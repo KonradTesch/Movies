@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, text
 DB_URL = "sqlite:///movies.db"
 
 # Create the engine
-engine = create_engine(DB_URL, echo=True)
+engine = create_engine(DB_URL, echo=False)
 
 def create_movies_table():
     # Create the movies table if it does not exist
@@ -27,14 +27,14 @@ def list_movies():
 
     return {row[0]: {"year": row[1], "rating": row[2]} for row in movies}
 
-def add_movie(title, year, rating):
+def add_movie(movie_data: dict):
     """Add a new movie to the database."""
     with engine.connect() as con:
         try:
-            con.execute(text("INSERT INTO movies (title, year, rating) VALUES (:title, :year, :rating)"),
-                               {"title": title, "year": year, "rating": rating})
+            con.execute(text("INSERT INTO movies (title, year, rating, poster_url) VALUES (:title, :year, :rating, :poster_url)"),
+                               {"title": movie_data["title"], "year": movie_data["year"], "rating": movie_data["rating"], "poster_url": movie_data["posterURL"]})
             con.commit()
-            print(f"Movie '{title}' added successfully.")
+            print(f"Movie '{movie_data["title"]}' added successfully.")
         except Exception as e:
             print(f"Error: {e}")
 
@@ -77,7 +77,7 @@ def get_movie(title):
     with engine.connect() as con:
         try:
             query = """
-                    SELECT title, year, rating FROM movies 
+                    SELECT year, rating, poster_url FROM movies 
                     WHERE title = :title
                     """
             parameters = {"title" : title}
@@ -85,8 +85,9 @@ def get_movie(title):
             result = con.execute(text(query), parameters)
             movie = result.fetchall()
 
-            title, year, rating = movie[0][0], movie[0][1], movie[0][2]
+            year, rating, poster = movie[0][0], movie[0][1], movie[0][2]
 
-            return title, year, rating
+            return year, rating, poster
         except Exception as e:
             print(f"Error: {e}")
+            return None

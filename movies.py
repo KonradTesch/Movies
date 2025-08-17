@@ -1,9 +1,10 @@
 import random
 import matplotlib.pyplot as plt
+import requests
 
 import movie_storage_sql as storage
 
-
+API_Key = "b20d4c97"
 
 WHITE = "\033[0m"
 RED = "\033[91m"
@@ -42,6 +43,23 @@ def green_input(text):
     print(WHITE, end="")
     return input_string
 
+def get_movie_data_from_api(title: str):
+    url = f"http://www.omdbapi.com/?apikey={API_Key}&t={title}"
+
+    response = requests.get(url)
+
+    response_data = response.json()
+
+    if response_data.get("Error"):
+        error_message = response_data["Error"]
+        raise Exception(error_message)
+
+    movie_data = {"title": response_data["Title"],
+                  "year": response_data["Year"],
+                  "rating": response_data["imdbRating"],
+                  "posterURL": response_data["Poster"]}
+
+    return movie_data
 
 def print_title(title):
     print(blue_text("-" * 15 + f" {title} " + "-" * 15))
@@ -62,11 +80,12 @@ def menu():
     while True:
         try:
             print()
-            choice_string = int(green_input("Enter choice (0-11): "))
+            choice_string = int(green_input(f"Enter choice (0-{len(MENU_OPTIONS)-1}): "))
             # check if the input is between 1 and 10
             if MENU_OPTIONS.get(choice_string):
                 function = MENU_OPTIONS.get(choice_string)[0]
                 function()
+                input("\nPress enter to continue")
                 break
             else:
                 raise ValueError()
@@ -74,46 +93,6 @@ def menu():
             print(red_text("Invalid input, try again."))
 
 
-
-def execute_choice(choice):
-    """
-    calls a function based of the user input
-    :param choice: The index of the chosen menu option
-    :return: False if the program should quit
-    """
-    print()
-    match choice:
-        case 0:
-            # return False to quit the program
-            print(f"Bye!")
-            return False
-        case 1:
-            print_movie_list()
-        case 2:
-            add_movie()
-        case 3:
-            delete_movie()
-        case 4:
-            update_movie()
-        case 5:
-            print_stats()
-        case 6:
-            random_movie()
-        case 7:
-            search_movie()
-        case 8:
-            print_sorted_list_rating()
-        case 9:
-            print_sorted_list_release()
-        case 10:
-                filter_movies()
-        case 11:
-                create_histogram()
-
-    print()
-    input("Press enter to continue")
-    # return True to let the program keep running
-    return True
 
 
 def print_movie_list():
@@ -134,29 +113,16 @@ def add_movie():
     """
     new_movie_name = green_input("Enter new movie name: ")
 
-    while True:
-        new_movie_rating = green_input("Enter new movie rating: ")
+    try:
+        movie_data = get_movie_data_from_api(new_movie_name)
 
-        # replace the dot with an empty string to check it the string is a number
-        if is_valid_rating(new_movie_rating):
-            break
-        else:
-            print(red_text("Invalid input, try again."))
+        storage.add_movie(movie_data)
 
-    new_movie_rating = round(float(new_movie_rating), 1)
+    except requests.exceptions.ConnectionError:
+        print(red_text("Connection error, try again later."))
+    except Exception as e:
+        print(red_text(e))
 
-    while True:
-        new_movie_year = green_input("Enter release year: ")
-        if new_movie_year.isnumeric():
-            break
-        else:
-            print(red_text("Invalid input, try again."))
-
-    new_movie_year = int(new_movie_year)
-
-    storage.add_movie(new_movie_name, new_movie_year, new_movie_rating)
-
-    print(f"Movie {new_movie_name} successfully added.")
 
 
 def delete_movie():
@@ -166,13 +132,14 @@ def delete_movie():
     """
     movies = storage.list_movies()
 
-    try:
-        movie_to_delete = green_input("Enter movie name to delete: ")
+    movie_to_delete = green_input("Enter movie name to delete: ")
 
+    if movies.get(movie_to_delete):
         storage.delete_movie(movie_to_delete)
         print(f"Movie {movie_to_delete} successfully deleted.")
-    except KeyError:
+    else:
         print(red_text(f"That movie doesn't exist."))
+
 
 
 def update_movie():
@@ -321,6 +288,7 @@ def print_sorted_list_rating():
 
     sorted_names = sorted(movies.keys(), key=lambda key: movies[key]["rating"])
 
+    print()
     for movie in sorted_names[::-1]:
         print(get_movie_text(movie))
 
@@ -350,7 +318,7 @@ def print_sorted_list_release(min_rating = 0, min_year = 0, max_year = 3000):
 
 
 def get_movie_text(title):
-    title, year, rating = storage.get_movie(title)
+    year, rating, poster = storage.get_movie(title)
     return f"{title} ({year}), {rating}"
 
 
@@ -411,6 +379,46 @@ def filter_movies():
 
     print_sorted_list_release(minimum_rating, min_year, max_year)
 
+
+def generate_website():
+    with open("html_data/index_template.html", "r") as template_file:
+        template_content = template_file.read()
+
+    movies = storage.list_movies()
+
+    movies_html_grid = ""
+
+    for movie in movies:
+        movies_html_grid += get_html_movie(movie)
+
+    website_title = "Movie Database"
+
+    website_content = template_content.replace("__TEMPLATE_TITLE__", website_title)
+    website_content = website_content.replace("__TEMPLATE_MOVIE_GRID__", movies_html_grid)
+
+    with open("html_data/index.html", "w") as index_file:
+        index_file.write(website_content)
+    print("The website has been successfully generated!")
+
+
+def get_html_movie(movie_title: str):
+    html_string = """
+    <li>
+        <div class="movie">
+            <img class="movie-poster"
+                 src="_POSTER_URL_"/>
+            <div class="movie-title">_MOVIE_TITLE</div>
+            <div class="movie-year">_MOVIE_YEAR_</div>
+        </div>
+    </li>
+    """
+    year, rating, poster = storage.get_movie(movie_title)
+
+    html_string = html_string.replace("_POSTER_URL_", poster)
+    html_string = html_string.replace("_MOVIE_TITLE", movie_title)
+    html_string = html_string.replace("_MOVIE_YEAR_", str(year))
+
+    return html_string
 
 
 
@@ -498,7 +506,8 @@ MENU_OPTIONS = {
     8 : (print_sorted_list_rating, "Movies sorted by rating"),
     9 : (print_sorted_list_release, "Movies sorted by release"),
     10 : (filter_movies, "Filter movies"),
-    11 : (create_histogram, "Create rating histogram")
+    11 : (generate_website, "Generate website"),
+    12 : (create_histogram, "Create rating histogram")
 }
 
 
