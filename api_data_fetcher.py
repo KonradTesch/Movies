@@ -1,7 +1,13 @@
 import os
+import requests
 from dotenv import load_dotenv
 
 def get_movie_data_from_api(title: str):
+    """
+    Fetches title, release year, rating and pooster url from the OMDb API.
+    :params title: The movie title.
+    :return: Dictionary with the movie data.
+    """
     load_dotenv()
     api_key = os.getenv("API_KEY")
 
