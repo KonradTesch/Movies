@@ -337,9 +337,24 @@ def create_histogram():
     :return: None
     """
     movies = storage.list_movies()
-    ratings = [movies[m]["rating"] for m in movies]
+    rating_counts = {}
 
-    plt.hist(ratings)
+    for i in range(1, 11):
+        rating_counts[i] = 0
+
+    for movie in movies:
+        rating = movies[movie]["rating"]
+        rating_counts[round(rating)] += 1
+
+    counts = list(rating_counts.values())
+    ratings = list(rating_counts.keys())
+
+    plt.bar(ratings, counts, color = "green", width=0.5)
+    plt.xlabel("Movie Rating")
+    plt.xticks(ratings, ratings, rotation=0)
+    plt.ylabel("Count")
+    plt.title("Movie Ratings")
+
 
     name_input = green_input("Enter the name of the file: ")
     plt.savefig(f"{name_input}.png")

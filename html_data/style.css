@@ -1,7 +1,7 @@
 body {
   background: #F5F5F0;
   color: black;
-  font-family: Monaco;
+    font-family: Monaco;
 }
 
 .list-movies-title {
@@ -15,15 +15,18 @@ body {
 .movie-grid {
   list-style-type: none;
   padding: 0;
-  margin: 0;
-  margin-top: 20px;
-  display: flex;
+  margin: 20px 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 140px);
+  gap: 20px;
   justify-content: center;
 }
 
+
 .movie-grid li {
-  padding: 10px 15px;
-  text-align: left;
+  padding: 10px 0;
+  text-align: center;
+  align-content: center;
 }
 
 .movie {
@@ -47,6 +50,6 @@ body {
 
 .movie-poster {
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
-    width: 128px;
-    height: 193px;
+    width: 100%;
+    height: auto;
 }
