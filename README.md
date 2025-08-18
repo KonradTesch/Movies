@@ -45,11 +45,11 @@ Start the program by running:
 
 Windows:
 ```bash
-python animals_web_generator.py
+python main.py
 ```
 Mac:
 ```bash
-python3 animals_web_generator.py
+python3 main.py
 ```
 
 The interactive menu will appear, offering options to list, add, update, delete, or search movies, as well as fetch new movie data, generate websites, and create histograms.
