@@ -1,4 +1,5 @@
 import menu_functions as menu
+import api_data_fetcher
 
 
 MENU_OPTIONS = {
@@ -57,6 +58,8 @@ def main():
     Main function that prints the title and runs the menu loop.
     :return: None
     """
+    api_data_fetcher.set_api_key()
+
     print_title("Movie Database")
 
     while True:

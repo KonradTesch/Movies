@@ -58,7 +58,7 @@ def delete_movie(title: str):
                     """
             parameters = {"title": title}
 
-            con.execute(text(query), parameters=parameters)
+            con.execute(text(query), parameters)
             con.commit()
             print(f"Movie '{title}' deleted successfully.")
         except Exception as e:

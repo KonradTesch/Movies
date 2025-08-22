@@ -2,7 +2,7 @@ import random
 import matplotlib.pyplot as plt
 import requests
 
-from api_data_fetcher import get_movie_data_from_api
+from api_data_fetcher import get_movie_data_from_api, APIError
 from movie_storage import movie_storage_sql as storage
 
 
@@ -75,8 +75,8 @@ def add_movie():
         storage.add_movie(movie_data)
     except requests.exceptions.ConnectionError:
         print(red_text("Connection error, try again later."))
-    except Exception as e:
-        print(red_text(e))
+    except APIError as e:
+        print(red_text(str(e)))
 
 
 def delete_movie():
